@@ -48,6 +48,9 @@ def new_post():
 def post(id):
     post = Post.query.get(int(id))
     form = PostForm(formdata=request.form, obj=post)
+    if form.delete.data:
+        post.delete_post(request.files['image_path'], current_user.id)
+        return redirect(url_for('home'))
     if form.validate_on_submit():
         post.save_changes(form, request.files['image_path'], current_user.id)
         return redirect(url_for('home'))
@@ -67,7 +70,9 @@ def login():
         user = User.query.filter_by(username=form.username.data).first()
         if user is None or not user.check_password(form.password.data):
             flash('Invalid username or password')
+            app.logger.info("INFO: Invalid username or password; username=%s", form.username.data)
             return redirect(url_for('login'))
+        app.logger.info("INFO: Form login; username=admin.")
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
@@ -91,11 +96,13 @@ def authorized():
             scopes=Config.SCOPE,
             redirect_uri=url_for('authorized', _external=True, _scheme='https'))
         if "error" in result:
+            app.logger.info("INFO: Invalid AD login.")
             return render_template("auth_error.html", result=result)
         session["user"] = result.get("id_token_claims")
         # Note: In a real app, we'd use the 'name' property from session["user"] below
         # Here, we'll use the admin username for anyone who is authenticated by MS
         user = User.query.filter_by(username="admin").first()
+        app.logger.info("INFO: AD login; username=admin.")
         login_user(user)
         _save_cache(cache)
     return redirect(url_for('home'))
@@ -107,6 +114,7 @@ def logout():
         # Wipe out user and its token cache from session
         session.clear()
         # Also logout from your tenant's web session
+        app.logger.info("INFO: user logged out.")
         return redirect(
             Config.AUTHORITY + "/oauth2/v2.0/logout" +
             "?post_logout_redirect_uri=" + url_for("login", _external=True))

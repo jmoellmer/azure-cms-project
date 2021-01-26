@@ -36,6 +36,7 @@ class Post(db.Model):
     __tablename__ = 'posts'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150))
+    subtitle = db.Column(db.String(255))
     author = db.Column(db.String(75))
     body = db.Column(db.String(800))
     image_path = db.Column(db.String(100))
@@ -47,15 +48,16 @@ class Post(db.Model):
 
     def save_changes(self, form, file, userId, new=False):
         self.title = form.title.data
+        self.subtitle = form.subtitle.data
         self.author = form.author.data
         self.body = form.body.data
         self.user_id = userId
 
         if file:
-            filename = secure_filename(file.filename);
-            fileextension = filename.rsplit('.',1)[1];
-            Randomfilename = id_generator();
-            filename = Randomfilename + '.' + fileextension;
+            filename = secure_filename(file.filename)
+            fileextension = filename.rsplit('.',1)[1]
+            Randomfilename = id_generator()
+            filename = Randomfilename + '.' + fileextension
             try:
                 blob_service.create_blob_from_stream(blob_container, filename, file)
                 if(self.image_path):
@@ -65,4 +67,13 @@ class Post(db.Model):
             self.image_path =  filename
         if new:
             db.session.add(self)
+        db.session.commit()
+
+    def delete_post(self, file, userId):
+        if self.image_path:
+            try:
+                blob_service.delete_blob(blob_container, self.image_path)
+            except Exception:
+                flash(Exception)
+        db.session.delete(self)
         db.session.commit()

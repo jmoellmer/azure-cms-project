@@ -14,6 +14,13 @@
                 {% endfor %}
             </p>
             <p>
+                {{ form.subtitle.label }}<br>
+                {{ form.subtitle(size=255) }}
+                {% for error in form.subtitle.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
                 {{ form.author.label }}<br>
                 {{ form.author(size=32) }}
                 {% for error in form.author.errors %}
@@ -28,6 +35,7 @@
                 {% endfor %}
             </p>
             <p>{{ form.submit() }}</p>
+            <p>{{ form.delete() }}</p>
         </div>
         <div class="col-sm-4">
             {% if form.image_path.data %}
