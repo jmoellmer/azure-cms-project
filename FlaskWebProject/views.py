@@ -101,8 +101,13 @@ def authorized():
         session["user"] = result.get("id_token_claims")
         # Note: In a real app, we'd use the 'name' property from session["user"] below
         # Here, we'll use the admin username for anyone who is authenticated by MS
-        user = User.query.filter_by(username="admin").first()
-        app.logger.info("INFO: AD login; username=admin.")
+        #user = User.query.filter_by(username="admin").first()
+        username = session["user"].get("name")
+        user = User.query.filter_by(username=username).one_or_none()
+        if user is None:
+            user = User()
+            user.create_user(username, result.get("id_token"))
+        app.logger.info("INFO: AD login; username=%s", username)
         login_user(user)
         _save_cache(cache)
     return redirect(url_for('home'))
