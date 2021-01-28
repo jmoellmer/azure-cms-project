@@ -1,0 +1,6 @@
+.azure/
+.vscode/
+FlaskWebProject/__pycache__/
+__pycache__/
+env/
+flask_session/
